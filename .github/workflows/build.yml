@@ -27,5 +27,5 @@ jobs:
           file: ./hacks/release/Dockerfile
           push: true
           tags: |
-            gh: .io/${{ github.repository_owner }}/fesghel:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/fesghel:${{ github.ref_name }}
             ghcr.io/${{ github.repository_owner }}/fesghel:latest
