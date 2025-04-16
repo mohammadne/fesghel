@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/mohammadne/fesghel/internal/config"
+	"github.com/mohammadne/fesghel/internal/entities"
 	"github.com/mohammadne/fesghel/pkg/databases/postgres"
 )
 
@@ -18,12 +19,13 @@ func main() {
 	environmentRaw := flag.String("environment", "", "The environment (default: local)")
 	flag.Parse() // Parse the command-line flags
 
-	cfg, err := config.Load(config.ToEnvironment(*environmentRaw))
-	if err != nil {
-		log.Fatalf("failed to load config: \n%v", err)
+	entities.LoadEnvironment(*environmentRaw)
+	var cfg Config
+	if err := config.Load(&cfg); err != nil {
+		log.Panicf("failed to load config: \n%v", err)
 	}
 
-	db, err := postgres.Open(cfg.Postgres, config.Namespace, config.System)
+	db, err := postgres.Open(cfg.Postgres, entities.Namespace, entities.System)
 	if err != nil {
 		log.Fatalf("error connecting to postgres database\n%v", err)
 	}
