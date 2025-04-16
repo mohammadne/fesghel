@@ -8,3 +8,14 @@
 > Fesghel is a persian name means small
 
 The url shortener
+
+## TODOs
+
+- complete readme
+- update docs
+- integration api tests
+- functional tests
+- unit tests
+- bench tests
+- load tests (locust instead of k6)
+- the pkg helper for integration
