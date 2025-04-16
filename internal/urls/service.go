@@ -59,7 +59,7 @@ func Initialize(cfg *Config, l *zap.Logger) (Service, error) {
 
 var (
 	ErrGenerateKey            = errors.New("error generate key")
-	ErrInsertingIntoPostgreq  = errors.New("error inserting value into postgres")
+	ErrInsertingIntoPostgres  = errors.New("error inserting value into postgres")
 	ErrMaxRetriesForCollision = errors.New("max retries exceeded while generating unique key")
 )
 
@@ -71,10 +71,10 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 	defer func(start time.Time) {
 		var status = metrics_pkg.StatusFailure
 		if err == nil {
-			s.p.Vectors.Histogram.ObserveResponseTime(start, "shorten")
+			s.m.Histogram.ObserveResponseTime(start, "shorten")
 			status = metrics_pkg.StatusSuccess
 		}
-		s.p.Vectors.Counter.IncrementVector("shorten", status)
+		s.m.Counter.IncrementVector("shorten", status)
 	}(time.Now())
 
 	for attempt := 1; attempt <= s.config.MaxRetriesOnCollision; attempt++ {
@@ -85,7 +85,7 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 			return "", errors.Join(ErrGenerateKey, err)
 		}
 
-		err = s.insertIntoOracle(ctx, key, string(url), timestamp)
+		err = s.insertIntoPostgres(ctx, key, string(url), timestamp)
 		if err == nil {
 			_ = s.insertIntoRedis(ctx, key, string(url))
 			return key, nil // success
@@ -97,7 +97,7 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 		}
 
 		// Some other DB error
-		return "", errors.Join(ErrInsertingIntoPostgreq, err)
+		return "", errors.Join(ErrInsertingIntoPostgres, err)
 	}
 
 	return "", ErrMaxRetriesForCollision
@@ -150,10 +150,10 @@ func (s *service) Retrieve(ctx context.Context, id string) (value entities.URL, 
 	defer func(start time.Time) {
 		var status = metrics_pkg.StatusFailure
 		if err == nil {
-			s.p.Vectors.Histogram.ObserveResponseTime(start, "retrieve")
+			s.m.Histogram.ObserveResponseTime(start, "retrieve")
 			status = metrics_pkg.StatusSuccess
 		}
-		s.p.Vectors.Counter.IncrementVector("retrieve", status)
+		s.m.Counter.IncrementVector("retrieve", status)
 	}(time.Now())
 
 	urlString, err := s.retrieveFromRedis(ctx, id)

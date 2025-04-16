@@ -42,7 +42,8 @@ func New(log *zap.Logger, urls urls.Service) *Server {
 	{
 		server.requestApp = fiber.New(fiber.Config{})
 
-		api := server.requestApp.Group("api")
+		api := server.requestApp.Group("api/v1")
+
 		middlewares.NewLanguage(api, log)
 		handlers.NewShorten(api, log, i18n, urls)
 	}

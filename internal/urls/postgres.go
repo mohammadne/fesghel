@@ -21,26 +21,21 @@ var (
 	errInsertingValue           = errors.New("error inserting value")
 )
 
-func (s *service) insertIntoOracle(ctx context.Context, id, value string, timestamp time.Time) (err error) {
+func (s *service) insertIntoPostgres(ctx context.Context, id, url string, timestamp time.Time) (err error) {
 	defer func(start time.Time) {
 		if err != nil {
-			s.p.Vectors.Counter.IncrementVector("data", "insert", metrics_pkg.StatusFailure)
+			s.p.Vectors.Counter.IncrementVector("urls", "insert", metrics_pkg.StatusFailure)
 			return
 		}
-		s.p.Vectors.Counter.IncrementVector("data", "insert", metrics_pkg.StatusSuccess)
-		s.p.Vectors.Histogram.ObserveResponseTime(start, "data", "insert")
+		s.p.Vectors.Counter.IncrementVector("urls", "insert", metrics_pkg.StatusSuccess)
+		s.p.Vectors.Histogram.ObserveResponseTime(start, "urls", "insert")
 	}(time.Now())
 
 	query := `
-	INSERT INTO DATA (ID, VALUE, CREATED_AT)
-	VALUES (:ID, :VALUE, :CREATED_AT)`
+	INSERT INTO urls (id, url, created_at)
+	VALUES ($1, $2, $3)`
 
-	_, err = s.p.ExecContext(ctx, query,
-		sql.Named("ID", id),
-		sql.Named("VALUE", value),
-		sql.Named("CREATED_AT", timestamp),
-	)
-
+	_, err = s.p.ExecContext(ctx, query, id, url, timestamp)
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
 			return errUniqueConstraintViolated
@@ -59,19 +54,19 @@ var (
 func (s *service) retrieveFromOracle(ctx context.Context, id string) (value string, err error) {
 	defer func(start time.Time) {
 		if err != nil {
-			s.p.Vectors.Counter.IncrementVector("data", "retrieve", metrics_pkg.StatusFailure)
+			s.p.Vectors.Counter.IncrementVector("urls", "retrieve", metrics_pkg.StatusFailure)
 			return
 		}
-		s.p.Vectors.Counter.IncrementVector("data", "retrieve", metrics_pkg.StatusSuccess)
-		s.p.Vectors.Histogram.ObserveResponseTime(start, "data", "retrieve")
+		s.p.Vectors.Counter.IncrementVector("urls", "retrieve", metrics_pkg.StatusSuccess)
+		s.p.Vectors.Histogram.ObserveResponseTime(start, "urls", "retrieve")
 	}(time.Now())
 
 	query := `
-	SELECT VALUE
-	FROM DATA
-	WHERE ID = :ID`
+	SELECT url
+	FROM urls
+	WHERE id = $1`
 
-	err = s.p.QueryRowContext(ctx, query, sql.Named("ID", id)).Scan(&value)
+	err = s.p.QueryRowContext(ctx, query, id).Scan(&value)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", ErrIDNotExists
