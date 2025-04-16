@@ -24,7 +24,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: ./hacks/release/Dockerfile
           push: true
           tags: |
             gh: .io/${{ github.repository_owner }}/fesghel:${{ github.ref_name }}

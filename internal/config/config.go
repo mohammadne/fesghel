@@ -28,7 +28,7 @@ func Load(config any) (err error) {
 	}
 
 	prefix := strings.ToUpper(strings.ReplaceAll(entities.System, "-", "_"))
-	if err = envconfig.Process(prefix, &config); err != nil {
+	if err = envconfig.Process(prefix, config); err != nil {
 		return fmt.Errorf("error processing config via envconfig: %v", err)
 	}
 
