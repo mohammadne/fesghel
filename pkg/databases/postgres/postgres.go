@@ -8,7 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 
-	"github.com/mohammadne/zanbil/pkg/observability/metrics"
+	"github.com/mohammadne/fesghel/pkg/observability/metrics"
 )
 
 type Postgres struct {
