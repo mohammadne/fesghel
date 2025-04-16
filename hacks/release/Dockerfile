@@ -1,8 +1,8 @@
 # STEP 1 build executable binary
-FROM golang:1.23 AS builder
+FROM golang:1.24.2 AS builder
 WORKDIR /src
 COPY . ./
-RUN cd cmd/web-api && CGO_ENABLED=0 go build -o fesghel && mv fesghel /usr/bin
+RUN cd cmd/server && CGO_ENABLED=0 go build -o fesghel && mv fesghel /usr/bin
 
 # STEP 2 build a small image
 FROM alpine:3.20
