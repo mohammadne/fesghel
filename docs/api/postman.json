@@ -1,0 +1,157 @@
+{
+	"info": {
+		"_postman_id": "0a036b11-1dec-43d4-84ff-aa9fa01b58f7",
+		"name": "fesghel",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21219426"
+	},
+	"item": [
+		{
+			"name": "monitor",
+			"item": [
+				{
+					"name": "metrics",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"data\": \"ali\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8001/metrics",
+							"host": [
+								"localhost"
+							],
+							"port": "8001",
+							"path": [
+								"metrics"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "liveness",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"data\": \"ali\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8001/healthz/liveness",
+							"host": [
+								"localhost"
+							],
+							"port": "8001",
+							"path": [
+								"healthz",
+								"liveness"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "readiness",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"data\": \"ali\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8001/healthz/readiness",
+							"host": [
+								"localhost"
+							],
+							"port": "8001",
+							"path": [
+								"healthz",
+								"readiness"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "get url",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8002/api/v1/shorten/Xc4vf",
+					"host": [
+						"localhost"
+					],
+					"port": "8002",
+					"path": [
+						"api",
+						"v1",
+						"shorten",
+						"Xc4vf"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "shorten url",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"ali\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8002/api/v1/shorten",
+					"host": [
+						"localhost"
+					],
+					"port": "8002",
+					"path": [
+						"api",
+						"v1",
+						"shorten"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
