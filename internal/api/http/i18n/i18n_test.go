@@ -36,8 +36,8 @@ func TestReader(t *testing.T) {
 		{
 			description: "testing an exsisting key in a valid locale",
 			language:    entities.LanguageEnglish,
-			key:         "categories.list.success",
-			expected:    "Categories have been retrieved successfully",
+			key:         "shorten.retrieve_url.success",
+			expected:    "The url has been retrieved successfully",
 		},
 	}
 

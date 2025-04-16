@@ -65,12 +65,12 @@ func (s *shorten) retrieveURL(c fiber.Ctx) error {
 	url, err := s.urls.Retrieve(c.Context(), id)
 	if err != nil {
 		if errors.Is(err, urls.ErrIDNotExists) {
-			s.logger.Error("error key not exists", zap.String("id", id))
+			s.logger.Error("error id not exists", zap.String("id", id))
 			response.Message = s.i18n.Translate("shorten.retrieve_url.not_exists", language)
 			return response.Write(c, fiber.StatusNotFound)
 		}
 
-		s.logger.Error("error retreiving the data", zap.Error(err))
+		s.logger.Error("error retreiving the url", zap.Error(err))
 		response.Message = s.i18n.Translate("shorten.retrieve_url.error", language)
 		return response.Write(c, fiber.StatusInternalServerError)
 	}
