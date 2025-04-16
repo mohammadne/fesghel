@@ -1,0 +1,24 @@
+{
+    "sheba": {
+        "list_transactions": {
+            "status_not_given": "Invalid transaction status has been given",
+            "success": "The transactions have been retrieved successfully"
+        },
+        "transfer_money": {
+            "invalid_body": "Invalid body has been passed",
+            "invalid_source_sheba": "Invalid source sheba has been passed",
+            "invalid_destination_sheba": "Invalid destination sheba has been passed",
+            "success": "Request is saved successfully and is in pending status"
+        },
+        "move_transaction": {
+            "id_not_given": "Invalid transaction id has been given",
+            "invalid_body": "Invalid body has been passed for moving transaction",
+            "success": "Transaction has been moved successfully"
+        }
+    },
+    "users": {
+        "list_users": {
+            "success": "The users have been retrieved successfully"
+        }
+    }
+}
