@@ -40,3 +40,13 @@ func counterVector(name, namespace, subsystem string, labels []string) *promethe
 func (c *counter) IncrementVector(values ...string) {
 	c.vector.WithLabelValues(values...).Inc()
 }
+
+// Noop implementation
+
+type counterNoop struct{}
+
+func (c *counterNoop) IncrementVector(values ...string) {}
+
+func RegisterCounterNoop() Counter {
+	return &counterNoop{}
+}

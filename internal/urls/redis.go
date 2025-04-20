@@ -17,7 +17,7 @@ type redis struct {
 	instance *redis_pkg.Redis
 }
 
-func newRedis(cfg *redis_pkg.Config) (Redis, error) {
+func NewRedis(cfg *redis_pkg.Config) (Redis, error) {
 	instance, err := redis_pkg.Open(cfg)
 	if err != nil {
 		return nil, err

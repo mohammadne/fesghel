@@ -13,10 +13,10 @@ import (
 
 type Postgres struct {
 	*sqlx.DB
-	Vectors *vectors
+	Vectors *Vectors
 }
 
-type vectors struct {
+type Vectors struct {
 	Counter   metrics.Counter
 	Histogram metrics.Histogram
 }
@@ -46,7 +46,7 @@ func Open(cfg *Config, namespace, subsystem string) (*Postgres, error) {
 		return nil, fmt.Errorf("error while pinging database: %v", err)
 	}
 
-	var vectors vectors
+	var vectors Vectors
 	{
 		counterName := vectorNamePrefix + "_counter"
 		counterLabels := []string{"table", "method", "status"}

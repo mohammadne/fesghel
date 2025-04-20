@@ -43,7 +43,7 @@ func main() {
 		}
 	}
 
-	urls, err := urls.Initialize(cfg.URLs, logger)
+	urls, err := urls.NewService(cfg.URLs, logger)
 	if err != nil {
 		log.Fatalf("failed to initialize urls: \n%v", err)
 	}

@@ -12,7 +12,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/mohammadne/fesghel/internal/entities"
-	"github.com/mohammadne/fesghel/pkg/databases/postgres"
 	metrics_pkg "github.com/mohammadne/fesghel/pkg/observability/metrics"
 )
 
@@ -28,11 +27,11 @@ type service struct {
 	config *Config
 	logger *zap.Logger
 	m      *metrics
-	p      *postgres.Postgres
+	p      Postgres
 	r      Redis
 }
 
-func Initialize(cfg *Config, l *zap.Logger) (Service, error) {
+func NewService(cfg *Config, l *zap.Logger) (Service, error) {
 	var svc = service{config: cfg, logger: l}
 
 	metrics, err := newMetrics()
@@ -41,13 +40,13 @@ func Initialize(cfg *Config, l *zap.Logger) (Service, error) {
 	}
 	svc.m = metrics
 
-	postgresInstance, err := postgres.Open(cfg.Postgres, entities.Namespace, entities.System)
+	postgres, err := NewPostgres(cfg.Postgres)
 	if err != nil {
 		l.Panic("error loading Postgres instance", zap.Error(err))
 	}
-	svc.p = postgresInstance
+	svc.p = postgres
 
-	redis, err := newRedis(cfg.Redis)
+	redis, err := NewRedis(cfg.Redis)
 	if err != nil {
 		l.Panic("error initializing Redis cache", zap.Error(err))
 	}
@@ -84,7 +83,7 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 			return "", errors.Join(ErrGenerateKey, err)
 		}
 
-		err = s.insertIntoPostgres(ctx, key, string(url), timestamp)
+		err = s.p.insert(ctx, key, string(url), timestamp)
 		if err == nil {
 			_ = s.r.insert(ctx, key, string(url), s.config.CacheExpiration)
 			return key, nil // success
@@ -161,7 +160,7 @@ func (s *service) Retrieve(ctx context.Context, id string) (value entities.URL, 
 	}
 	// todo: just log the error
 
-	urlString, err = s.retrieveFromOracle(ctx, id)
+	urlString, err = s.p.retrieve(ctx, id)
 	if err != nil {
 		return "", errors.Join(ErrRetreivingDataFromDatabase, err)
 	}

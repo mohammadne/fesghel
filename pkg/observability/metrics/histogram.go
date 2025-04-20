@@ -42,3 +42,13 @@ func histogramVector(name, namespace, subsystem string, labels []string) *promet
 func (c *histogram) ObserveResponseTime(start time.Time, values ...string) {
 	c.vector.WithLabelValues(values...).Observe(time.Since(start).Seconds())
 }
+
+// Noop implementation
+
+type histogramNoop struct{}
+
+func (h *histogramNoop) ObserveResponseTime(duration time.Time, values ...string) {}
+
+func RegisterHistogramNoop() Histogram {
+	return &histogramNoop{}
+}

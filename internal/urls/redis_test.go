@@ -21,7 +21,7 @@ func TestRedis(t *testing.T) {
 	defer redisInstance.Close()
 
 	cfg := redis_pkg.Config{Address: redisInstance.Addr(), Timeout: time.Second * 2}
-	redis, err := newRedis(&cfg)
+	redis, err := NewRedis(&cfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not open redis: %v\n", err)
 		os.Exit(1) // Exit with a non-zero status code
@@ -40,7 +40,7 @@ func TestRedis(t *testing.T) {
 
 	t.Run("retrieve", func(t *testing.T) {
 		t.Run("check expiration", func(t *testing.T) {
-			redisInstance.Set("key-1", string(marshaledItem))
+			redisInstance.Set("key-1", "value-1")
 			redisInstance.SetTTL("key-1", cacheTTL)
 
 			err := redis.insert(context.TODO(), "key-expiration", "value-expiration", cacheTTL)
