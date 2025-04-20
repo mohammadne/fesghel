@@ -4,13 +4,16 @@ import (
 	"testing"
 )
 
-func TestPostgres(t *testing.T) {
+func TestPostgresInsert(t *testing.T) {
 
-	t.Run("insert", func(t *testing.T) {
+	t.Run("scenario-1", func(t *testing.T) {
 
 	})
+}
 
-	t.Run("retrieve", func(t *testing.T) {
+func TestPostgresRetrieve(t *testing.T) {
+
+	t.Run("scenario-1", func(t *testing.T) {
 
 	})
 }
