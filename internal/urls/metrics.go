@@ -32,3 +32,10 @@ func newMetrics() (m *metrics, err error) {
 
 	return m, nil
 }
+
+func newMetricsNoop() *metrics {
+	return &metrics{
+		Counter:   metrics_pkg.RegisterCounterNoop(),
+		Histogram: metrics_pkg.RegisterHistogramNoop(),
+	}
+}

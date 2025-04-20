@@ -24,11 +24,11 @@ type Service interface {
 }
 
 type service struct {
-	config *Config
-	logger *zap.Logger
-	m      *metrics
-	p      Postgres
-	r      Redis
+	config   *Config
+	logger   *zap.Logger
+	metrics  *metrics
+	postgres Postgres
+	redis    Redis
 }
 
 func NewService(cfg *Config, l *zap.Logger) (Service, error) {
@@ -38,19 +38,19 @@ func NewService(cfg *Config, l *zap.Logger) (Service, error) {
 	if err != nil {
 		l.Panic("error loading Postgres instance", zap.Error(err))
 	}
-	svc.m = metrics
+	svc.metrics = metrics
 
 	postgres, err := NewPostgres(cfg.Postgres)
 	if err != nil {
 		l.Panic("error loading Postgres instance", zap.Error(err))
 	}
-	svc.p = postgres
+	svc.postgres = postgres
 
 	redis, err := NewRedis(cfg.Redis)
 	if err != nil {
 		l.Panic("error initializing Redis cache", zap.Error(err))
 	}
-	svc.r = redis
+	svc.redis = redis
 
 	return &svc, nil
 }
@@ -69,10 +69,10 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 	defer func(start time.Time) {
 		var status = metrics_pkg.StatusFailure
 		if err == nil {
-			s.m.Histogram.ObserveResponseTime(start, "shorten")
+			s.metrics.Histogram.ObserveResponseTime(start, "shorten")
 			status = metrics_pkg.StatusSuccess
 		}
-		s.m.Counter.IncrementVector("shorten", status)
+		s.metrics.Counter.IncrementVector("shorten", status)
 	}(time.Now())
 
 	for attempt := 1; attempt <= s.config.MaxRetriesOnCollision; attempt++ {
@@ -83,9 +83,9 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 			return "", errors.Join(ErrGenerateKey, err)
 		}
 
-		err = s.p.insert(ctx, key, string(url), timestamp)
+		err = s.postgres.insert(ctx, key, string(url), timestamp)
 		if err == nil {
-			_ = s.r.insert(ctx, key, string(url), s.config.CacheExpiration)
+			_ = s.redis.insert(ctx, key, string(url), s.config.CacheExpiration)
 			return key, nil // success
 		}
 
@@ -148,23 +148,23 @@ func (s *service) Retrieve(ctx context.Context, id string) (value entities.URL, 
 	defer func(start time.Time) {
 		var status = metrics_pkg.StatusFailure
 		if err == nil {
-			s.m.Histogram.ObserveResponseTime(start, "retrieve")
+			s.metrics.Histogram.ObserveResponseTime(start, "retrieve")
 			status = metrics_pkg.StatusSuccess
 		}
-		s.m.Counter.IncrementVector("retrieve", status)
+		s.metrics.Counter.IncrementVector("retrieve", status)
 	}(time.Now())
 
-	urlString, err := s.r.retrieve(ctx, id)
+	urlString, err := s.redis.retrieve(ctx, id)
 	if err == nil {
 		return entities.URL(urlString), nil
 	}
 	// todo: just log the error
 
-	urlString, err = s.p.retrieve(ctx, id)
+	urlString, err = s.postgres.retrieve(ctx, id)
 	if err != nil {
 		return "", errors.Join(ErrRetreivingDataFromDatabase, err)
 	}
-	_ = s.r.insert(ctx, id, urlString, s.config.CacheExpiration)
+	_ = s.redis.insert(ctx, id, urlString, s.config.CacheExpiration)
 
 	return entities.URL(urlString), nil
 }
