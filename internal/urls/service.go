@@ -13,7 +13,6 @@ import (
 
 	"github.com/mohammadne/fesghel/internal/entities"
 	"github.com/mohammadne/fesghel/pkg/databases/postgres"
-	"github.com/mohammadne/fesghel/pkg/databases/redis"
 	metrics_pkg "github.com/mohammadne/fesghel/pkg/observability/metrics"
 )
 
@@ -30,7 +29,7 @@ type service struct {
 	logger *zap.Logger
 	m      *metrics
 	p      *postgres.Postgres
-	r      *redis.Redis
+	r      Redis
 }
 
 func Initialize(cfg *Config, l *zap.Logger) (Service, error) {
@@ -48,11 +47,11 @@ func Initialize(cfg *Config, l *zap.Logger) (Service, error) {
 	}
 	svc.p = postgresInstance
 
-	redisInstance, err := redis.Open(cfg.Redis)
+	redis, err := newRedis(cfg.Redis)
 	if err != nil {
 		l.Panic("error initializing Redis cache", zap.Error(err))
 	}
-	svc.r = redisInstance
+	svc.r = redis
 
 	return &svc, nil
 }
@@ -87,7 +86,7 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 
 		err = s.insertIntoPostgres(ctx, key, string(url), timestamp)
 		if err == nil {
-			_ = s.insertIntoRedis(ctx, key, string(url))
+			_ = s.r.insert(ctx, key, string(url), s.config.CacheExpiration)
 			return key, nil // success
 		}
 
@@ -156,7 +155,7 @@ func (s *service) Retrieve(ctx context.Context, id string) (value entities.URL, 
 		s.m.Counter.IncrementVector("retrieve", status)
 	}(time.Now())
 
-	urlString, err := s.retrieveFromRedis(ctx, id)
+	urlString, err := s.r.retrieve(ctx, id)
 	if err == nil {
 		return entities.URL(urlString), nil
 	}
@@ -166,7 +165,7 @@ func (s *service) Retrieve(ctx context.Context, id string) (value entities.URL, 
 	if err != nil {
 		return "", errors.Join(ErrRetreivingDataFromDatabase, err)
 	}
-	_ = s.insertIntoRedis(ctx, id, urlString)
+	_ = s.r.insert(ctx, id, urlString, s.config.CacheExpiration)
 
 	return entities.URL(urlString), nil
 }
