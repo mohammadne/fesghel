@@ -9,8 +9,8 @@ import (
 )
 
 type Redis interface {
-	insert(ctx context.Context, key, value string, expiration time.Duration) error
-	retrieve(ctx context.Context, key string) (string, error)
+	insert(ctx context.Context, id, url string, expiration time.Duration) error
+	retrieve(ctx context.Context, id string) (url string, err error)
 }
 
 type redis struct {
@@ -26,13 +26,18 @@ func NewRedis(cfg *redis_pkg.Config) (Redis, error) {
 }
 
 var (
-	errInsertDataToRedis = errors.New("error insert data to redis")
+	errInvalidInsertParameters = errors.New("error Invalid Insert Parameters")
+	errInsertURLToRedis        = errors.New("error insert url to redis")
 )
 
-func (s *redis) insert(ctx context.Context, key, value string, expiration time.Duration) error {
-	if err := s.instance.Set(ctx, key, value, expiration).Err(); err != nil {
+func (s *redis) insert(ctx context.Context, id, url string, expiration time.Duration) error {
+	if len(id) == 0 || len(url) == 0 {
+		return errInvalidInsertParameters
+	}
+
+	if err := s.instance.Set(ctx, id, url, expiration).Err(); err != nil {
 		// s.metrics.counter.WithLabelValues("SetInformation", "failure").Inc()
-		return errors.Join(errInsertDataToRedis, err)
+		return errors.Join(errInsertURLToRedis, err)
 	}
 
 	// s.metrics.counter.WithLabelValues("SetInformation", "success").Inc()
@@ -40,19 +45,24 @@ func (s *redis) insert(ctx context.Context, key, value string, expiration time.D
 }
 
 var (
-	errKeyNotFound = errors.New("errKeyNotFound")
+	errInvalidRetrieveParameters = errors.New("error Invalid Insert Parameters")
+	errIDNotFound                = errors.New("errIDNotFound")
 )
 
-func (s *redis) retrieve(ctx context.Context, key string) (string, error) {
-	dataString, err := s.instance.Get(ctx, key).Result()
+func (s *redis) retrieve(ctx context.Context, id string) (string, error) {
+	if len(id) == 0 {
+		return "", errInvalidRetrieveParameters
+	}
+
+	url, err := s.instance.Get(ctx, id).Result()
 	if err != nil {
 		if errors.Is(err, redis_pkg.Nil) {
-			return "", errKeyNotFound
+			return "", errIDNotFound
 		}
 		// s.metrics.counter.WithLabelValues("SetInformation", "failure").Inc()
-		return "", errors.Join(errInsertDataToRedis, err)
+		return "", errors.Join(errInsertURLToRedis, err)
 	}
 
 	// s.metrics.counter.WithLabelValues("SetInformation", "success").Inc()
-	return dataString, nil
+	return url, nil
 }
