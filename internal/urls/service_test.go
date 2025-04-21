@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mohammadne/fesghel/internal/entities"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/mohammadne/fesghel/internal/entities"
 )
 
 func TestServiceShorten(t *testing.T) {
@@ -17,6 +18,8 @@ func TestServiceShorten(t *testing.T) {
 	)
 
 	t.Run("success", func(t *testing.T) {
+		initializeServiceInstance()
+
 		{ // prepare the mocks
 			postgresMock.
 				On("insert", mock.Anything, mock.Anything, url, mock.Anything).
@@ -36,6 +39,8 @@ func TestServiceShorten(t *testing.T) {
 
 	t.Run("check collision", func(t *testing.T) {
 		t.Run("retry for one collision", func(t *testing.T) {
+			initializeServiceInstance()
+
 			{ // prepare the mocks
 				postgresMock.
 					On("insert", mock.Anything, mock.Anything, url, mock.Anything).
@@ -58,23 +63,27 @@ func TestServiceShorten(t *testing.T) {
 		})
 
 		t.Run("max retry exceeded", func(t *testing.T) {
+			initializeServiceInstance()
+
 			{ // prepare the mocks
 				for range serviceInstance.config.MaxRetriesOnCollision {
 					postgresMock.
-						On("insert", mock.Anything, mock.Anything, url, mock.Anything).
+						On("insert", mock.Anything, mock.Anything, url+"2", mock.Anything).
 						Return(errUniqueConstraintViolated).Once()
 				}
 			}
 
-			_, err := serviceInstance.Shorten(context.TODO(), entities.URL(url))
-			if !errors.Is(err, errUniqueConstraintViolated) {
-				t.Errorf("expect errUniqueConstraintViolated error %v", err)
+			_, err := serviceInstance.Shorten(context.TODO(), entities.URL(url+"2"))
+			if !errors.Is(err, ErrMaxRetriesForCollision) {
+				t.Errorf("expect ErrMaxRetriesForCollision error %v", err)
 			}
 			postgresMock.AssertExpectations(t)
 		})
 	})
 
 	t.Run("postgres error", func(t *testing.T) {
+		initializeServiceInstance()
+
 		{ // prepare the mocks
 			postgresMock.
 				On("insert", mock.Anything, mock.Anything, url, mock.Anything).
@@ -93,7 +102,7 @@ func TestGenerateKey(t *testing.T) {
 	key := serviceInstance.generateKey("anything", time.Now())
 
 	expected := false
-	for i := range 3 {
+	for i := range 4 {
 		if len(key) == serviceInstance.config.ShortURLLength+i {
 			expected = true
 		}
@@ -111,6 +120,8 @@ func TestServiceRetrieve(t *testing.T) {
 	)
 
 	t.Run("no cache (error) and no postgres", func(t *testing.T) {
+		initializeServiceInstance()
+
 		{ // prepare the mocks
 			redisMock.
 				On("retrieve", mock.Anything, sampleID).
@@ -129,6 +140,8 @@ func TestServiceRetrieve(t *testing.T) {
 	})
 
 	t.Run("no cache (error) and postgres error", func(t *testing.T) {
+		initializeServiceInstance()
+
 		{ // prepare the mocks
 			redisMock.
 				On("retrieve", mock.Anything, sampleID).
@@ -147,6 +160,8 @@ func TestServiceRetrieve(t *testing.T) {
 	})
 
 	t.Run("success with cache", func(t *testing.T) {
+		initializeServiceInstance()
+
 		{ // prepare the mocks
 			redisMock.
 				On("retrieve", mock.Anything, sampleID).
@@ -161,6 +176,8 @@ func TestServiceRetrieve(t *testing.T) {
 	})
 
 	t.Run("success on no cache (error)", func(t *testing.T) {
+		initializeServiceInstance()
+
 		{ // prepare the mocks
 			redisMock.
 				On("retrieve", mock.Anything, sampleID).

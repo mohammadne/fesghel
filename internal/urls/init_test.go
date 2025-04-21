@@ -53,7 +53,6 @@ func TestMain(m *testing.M) {
 		postgresInstacne = &postgres{
 			instance: &postgres_pkg.Postgres{DB: sqlxDB, Vectors: &vectors},
 		}
-		postgresMock = new(mockPostgres)
 	}
 
 	{ // redis
@@ -70,7 +69,6 @@ func TestMain(m *testing.M) {
 			fmt.Fprintf(os.Stderr, "could not open redis: %v\n", err)
 			os.Exit(1) // Exit with a non-zero status code
 		}
-		redisMock = new(mockRedis)
 	}
 
 	// service
@@ -79,13 +77,19 @@ func TestMain(m *testing.M) {
 			MaxRetriesOnCollision: 3,
 			CacheExpiration:       time.Second * 10,
 		},
-		logger:   zap.NewNop(),
-		metrics:  newMetricsNoop(),
-		postgres: postgresMock,
-		redis:    redisMock,
+		logger:  zap.NewNop(),
+		metrics: newMetricsNoop(),
 	}
 
 	m.Run()
+}
+
+func initializeServiceInstance() {
+	postgresMock = new(mockPostgres)
+	redisMock = new(mockRedis)
+
+	serviceInstance.postgres = postgresMock
+	serviceInstance.redis = redisMock
 }
 
 type mockPostgres struct{ mock.Mock }
