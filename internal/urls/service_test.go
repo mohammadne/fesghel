@@ -113,6 +113,17 @@ func TestGenerateKey(t *testing.T) {
 	}
 }
 
+func BenchmarkGenerateKey(b *testing.B) {
+	url := "https://example.com"
+	timestamp := time.Now()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = serviceInstance.generateKey(url, timestamp)
+	}
+}
+
 func TestServiceRetrieve(t *testing.T) {
 	var (
 		sampleURL = "id"
