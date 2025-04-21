@@ -1,6 +1,7 @@
 package urls
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/mock"
 	"go.uber.org/zap"
 
 	postgres_pkg "github.com/mohammadne/fesghel/pkg/databases/postgres"
@@ -19,10 +21,12 @@ import (
 
 var (
 	mockDatabase     sqlmock.Sqlmock
-	postgresInstacne *postgres
+	postgresInstacne Postgres
+	postgresMock     *mockPostgres
 
 	miniredisInstance *miniredis.Miniredis
 	redisInstance     Redis
+	redisMock         *mockRedis
 
 	serviceInstance *service
 )
@@ -49,6 +53,7 @@ func TestMain(m *testing.M) {
 		postgresInstacne = &postgres{
 			instance: &postgres_pkg.Postgres{DB: sqlxDB, Vectors: &vectors},
 		}
+		postgresMock = new(mockPostgres)
 	}
 
 	{ // redis
@@ -65,6 +70,7 @@ func TestMain(m *testing.M) {
 			fmt.Fprintf(os.Stderr, "could not open redis: %v\n", err)
 			os.Exit(1) // Exit with a non-zero status code
 		}
+		redisMock = new(mockRedis)
 	}
 
 	// service
@@ -75,9 +81,33 @@ func TestMain(m *testing.M) {
 		},
 		logger:   zap.NewNop(),
 		metrics:  newMetricsNoop(),
-		postgres: postgresInstacne,
-		redis:    redisInstance,
+		postgres: postgresMock,
+		redis:    redisMock,
 	}
 
 	m.Run()
+}
+
+type mockPostgres struct{ mock.Mock }
+
+func (m *mockPostgres) insert(ctx context.Context, id, url string, timestamp time.Time) (err error) {
+	args := m.Called(ctx, id, url, timestamp)
+	return args.Error(0)
+}
+
+func (m *mockPostgres) retrieve(ctx context.Context, id string) (url string, err error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(string), args.Error(1)
+}
+
+type mockRedis struct{ mock.Mock }
+
+func (m *mockRedis) insert(ctx context.Context, id, url string, expiration time.Duration) error {
+	args := m.Called(ctx, id, url, expiration)
+	return args.Error(0)
+}
+
+func (m *mockRedis) retrieve(ctx context.Context, id string) (url string, err error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(string), args.Error(1)
 }
