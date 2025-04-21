@@ -35,6 +35,12 @@ var (
 	errInsertingURL             = errors.New("error inserting url")
 )
 
+const (
+	queryInsert = `
+	INSERT INTO urls (id, url, created_at)
+	VALUES ($1, $2, $3)`
+)
+
 func (s *postgres) insert(ctx context.Context, id, url string, timestamp time.Time) (err error) {
 	defer func(start time.Time) {
 		if err != nil {
@@ -45,11 +51,7 @@ func (s *postgres) insert(ctx context.Context, id, url string, timestamp time.Ti
 		s.instance.Vectors.Histogram.ObserveResponseTime(start, "urls", "insert")
 	}(time.Now())
 
-	query := `
-	INSERT INTO urls (id, url, created_at)
-	VALUES ($1, $2, $3)`
-
-	_, err = s.instance.ExecContext(ctx, query, id, url, timestamp)
+	_, err = s.instance.ExecContext(ctx, queryInsert, id, url, timestamp)
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
 			return errUniqueConstraintViolated
@@ -65,6 +67,13 @@ var (
 	ErrRetreivingValue = errors.New("error retreiving url")
 )
 
+const (
+	queryRetrieve = `
+	SELECT url
+	FROM urls
+	WHERE id = $1`
+)
+
 func (s *postgres) retrieve(ctx context.Context, id string) (url string, err error) {
 	defer func(start time.Time) {
 		if err != nil {
@@ -75,12 +84,7 @@ func (s *postgres) retrieve(ctx context.Context, id string) (url string, err err
 		s.instance.Vectors.Histogram.ObserveResponseTime(start, "urls", "retrieve")
 	}(time.Now())
 
-	query := `
-	SELECT url
-	FROM urls
-	WHERE id = $1`
-
-	err = s.instance.QueryRowContext(ctx, query, id).Scan(&url)
+	err = s.instance.QueryRowContext(ctx, queryRetrieve, id).Scan(&url)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return "", ErrIDNotExists
