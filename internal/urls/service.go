@@ -56,7 +56,6 @@ func NewService(cfg *Config, l *zap.Logger) (Service, error) {
 }
 
 var (
-	ErrGenerateKey            = errors.New("error generate key")
 	ErrInsertingIntoPostgres  = errors.New("error inserting value into postgres")
 	ErrMaxRetriesForCollision = errors.New("max retries exceeded while generating unique key")
 )
@@ -78,10 +77,7 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 	for attempt := 1; attempt <= s.config.MaxRetriesOnCollision; attempt++ {
 		timestamp := time.Now()
 
-		key, err = s.generateKey(string(url), timestamp)
-		if err != nil {
-			return "", errors.Join(ErrGenerateKey, err)
-		}
+		key = s.generateKey(string(url), timestamp)
 
 		err = s.postgres.insert(ctx, key, string(url), timestamp)
 		if err == nil {
@@ -105,15 +101,15 @@ func (s *service) Shorten(ctx context.Context, url entities.URL) (key string, er
 // 1. calculate current epoch timestamp
 // 2. generate a hash via sha256 from timestamp and the value
 // 3. calculate base62 of the trunicated hash
-func (s *service) generateKey(url string, timestamp time.Time) (string, error) {
+func (s *service) generateKey(seed string, timestamp time.Time) string {
 	epoch := timestamp.UnixNano()
 	salt := strconv.FormatInt(epoch, 10)
 
 	// TODO: use mobile-number or account-id instead of value
-	hash := sha256.Sum256([]byte(url + salt))
+	hash := sha256.Sum256([]byte(seed + salt))
 	shortHash := hash[:s.config.ShortURLLength]
 
-	return encodeToBase62(shortHash), nil
+	return encodeToBase62(shortHash)
 }
 
 // Base62 charset
@@ -140,6 +136,7 @@ func encodeToBase62(input []byte) string {
 }
 
 var (
+	ErrShortenIDNotExists         = errors.New("ErrShortenIDNotExists")
 	ErrRetreivingDataFromDatabase = errors.New("error retreiving data from database")
 )
 
@@ -162,6 +159,9 @@ func (s *service) Retrieve(ctx context.Context, id string) (value entities.URL, 
 
 	urlString, err = s.postgres.retrieve(ctx, id)
 	if err != nil {
+		if errors.Is(err, ErrIDNotExists) {
+			return "", ErrShortenIDNotExists
+		}
 		return "", errors.Join(ErrRetreivingDataFromDatabase, err)
 	}
 	_ = s.redis.insert(ctx, id, urlString, s.config.CacheExpiration)
