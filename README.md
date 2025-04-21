@@ -45,7 +45,7 @@ checks_failed......................: 46.87% 15 out of 32
 
 ✓ liveness is status 200
 ✓ readiness is status 200
-✓ shorten status is 200
+✓ shorten status is 201
 ✗ response has ID
     ↳  0% — ✓ 0 / ✗ 15
 

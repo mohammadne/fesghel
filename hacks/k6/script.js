@@ -18,7 +18,7 @@ export const options = {
         'get': {
             executor: 'constant-vus',
             vus: 50,
-            duration: '30s',
+            duration: '10s',
             startTime: '10s', // Delay the start of this scenario until the shorten scenario finishes
         },
     },
@@ -45,7 +45,7 @@ function shortenUrl() {
     const shortenRes = http.post(`${REQUEST_URL}/shorten`, shortenPayload, headers);
 
     check(shortenRes, {
-        'shorten status is 200': (r) => r.status === 200,
+        'shorten status is 201': (r) => r.status === 201,
         'response has ID': (r) => !!r.json().id,
     });
 
@@ -84,10 +84,8 @@ export default function () {
     } else if (scenario === 'shorten') {
         shortenUrl();  // Generate and collect IDs
     } else if (scenario === 'get' && generatedIds.length > 0) {
-        // Use the collected IDs from the shorten scenario
-        for (let i = 0; i < 10; i++) {
-            const id = generatedIds[i];
-            getShortenedUrl(id);  // Fetch each shortened URL using the IDs
-        }
+        let randomIndex = Math.floor(Math.random() * generatedIds.length);
+        const randomID = generatedIds[randomIndex];
+        getShortenedUrl(randomID);  // Fetch shortened URL
     }
 }

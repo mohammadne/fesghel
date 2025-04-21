@@ -49,7 +49,7 @@ func (s *shorten) shortenURL(c fiber.Ctx) error {
 
 	response.Request = models.ShortenURLResponse{ID: id}
 	response.Message = s.i18n.Translate("shorten.shorten_url.success", language)
-	return response.Write(c, fiber.StatusOK)
+	return response.Write(c, fiber.StatusCreated)
 }
 
 func (s *shorten) retrieveURL(c fiber.Ctx) error {
