@@ -27,7 +27,7 @@ type Server struct {
 func New(log *zap.Logger, urls urls.Service) *Server {
 	server := &Server{logger: log}
 
-	{
+	{ // monitoring handlers
 		server.monitorApp = fiber.New(fiber.Config{})
 
 		server.monitorApp.Get("/metrics", adaptor.HTTPHandler(promhttp.Handler()))
@@ -39,13 +39,15 @@ func New(log *zap.Logger, urls urls.Service) *Server {
 		log.Fatal("failed to load i18n", zap.Error(err))
 	}
 
-	{
+	{ // requests handlers
 		server.requestApp = fiber.New(fiber.Config{})
 
-		api := server.requestApp.Group("api/v1")
+		apiGroup := server.requestApp.Group("api/v1")
+		middlewares.NewLanguage(apiGroup, log)
+		handlers.NewShorten(apiGroup, log, i18n, urls)
 
-		middlewares.NewLanguage(api, log)
-		handlers.NewShorten(api, log, i18n, urls)
+		handlers.NewRoute(server.requestApp, log, urls)
+
 	}
 
 	return server

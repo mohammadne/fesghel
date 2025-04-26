@@ -13,4 +13,5 @@ type Config struct {
 	ShortURLLength        int                  `required:"true" split_words:"true"`
 	MaxRetriesOnCollision int                  `required:"true" split_words:"true"`
 	CacheExpiration       time.Duration        `required:"true" split_words:"true"`
+	BaseAddress           string               `required:"true" split_words:"true"`
 }
