@@ -61,7 +61,7 @@ sudo dnf install k6
 
 Sample result:
 
-‍‍‍```txt
+```txt
 TOTAL RESULTS
 
 checks_total.......................: 32     0.799981/s
